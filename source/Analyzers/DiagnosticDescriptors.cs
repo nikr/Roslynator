@@ -1757,5 +1757,14 @@ namespace Roslynator.CSharp
             defaultSeverity: DiagnosticSeverity.Info,
             isEnabledByDefault: true
         );
+
+        public static readonly DiagnosticDescriptor ReduceIfNesting = new DiagnosticDescriptor(
+            id: DiagnosticIdentifiers.ReduceIfNesting,
+            title: "Reduce if nesting.",
+            messageFormat: "Reduce if nesting.",
+            category: DiagnosticCategories.Style,
+            defaultSeverity: DiagnosticSeverity.Info,
+            isEnabledByDefault: true
+        );
     }
 }

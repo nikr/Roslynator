@@ -1107,6 +1107,17 @@ namespace Roslynator.CSharp
         {
             return localFunctionStatement?.ReturnType?.IsVoid() == true;
         }
+
+        public static bool IsIterator(this LocalFunctionStatementSyntax localFunctionStatement)
+        {
+            if (localFunctionStatement == null)
+                throw new ArgumentNullException(nameof(localFunctionStatement));
+
+            return localFunctionStatement
+                    .Body?
+                    .DescendantNodes(node => !node.IsNestedMethod())
+                    .Any(f => f.IsKind(SyntaxKind.YieldReturnStatement, SyntaxKind.YieldBreakStatement)) == true;
+        }
         #endregion LocalFunctionStatementSyntax
 
         #region MemberDeclarationSyntax
@@ -2361,6 +2372,25 @@ namespace Roslynator.CSharp
                 GetEndIndex(list.Last(), includeExteriorTrivia, trim));
 
             return tree.IsMultiLineSpan(span, cancellationToken);
+        }
+
+        internal static bool IsLastStatement(
+            this SyntaxList<StatementSyntax> statements,
+            StatementSyntax statement,
+            bool skipLocalFunction = false)
+        {
+            if (!skipLocalFunction)
+                return statements.IsLast(statement);
+
+            for (int i = statements.Count - 1; i >= 0; i--)
+            {
+                StatementSyntax statement2 = statements[i];
+
+                if (!statement2.IsKind(SyntaxKind.LocalFunctionStatement))
+                    return statement2 == statement;
+            }
+
+            return false;
         }
         #endregion SyntaxList<T>
 
