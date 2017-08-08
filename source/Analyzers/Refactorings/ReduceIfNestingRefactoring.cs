@@ -66,7 +66,7 @@ namespace Roslynator.CSharp.Refactorings
                                             .GetDeclaredSymbol(methodDeclaration, cancellationToken)?
                                             .ReturnType
                                             .IsIEnumerableOrConstructedFromIEnumerableOfT() == true
-                                        && methodDeclaration.IsIterator();
+                                        && methodDeclaration.ContainsYield();
                                 }
                             }
                         case SyntaxKind.LocalFunctionStatement:
@@ -89,7 +89,7 @@ namespace Roslynator.CSharp.Refactorings
                                     return ((IMethodSymbol)semanticModel.GetDeclaredSymbol(localFunction, cancellationToken))?
                                             .ReturnType
                                             .IsIEnumerableOrConstructedFromIEnumerableOfT() == true
-                                        && localFunction.IsIterator();
+                                        && localFunction.ContainsYield();
                                 }
                             }
                     }
