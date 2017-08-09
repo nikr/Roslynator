@@ -138,7 +138,6 @@
     <Compile Include="Refactorings\MakeMemberReadOnly\UseReadOnlyAutoPropertyRefactoring.cs" />
     <Compile Include="Refactorings\JoinStringExpressionsRefactoring.cs" />
     <Compile Include="Refactorings\OverridingMemberCannotChangeParamsModifierRefactoring.cs" />
-    <Compile Include="Refactorings\ReduceIfNestingRefactoring.cs" />
     <Compile Include="Refactorings\RemoveRedundantAsyncAwaitRefactoring.cs" />
     <Compile Include="Refactorings\RemoveRedundantAsyncAwaitRefactoring.AwaitRemover.cs" />
     <Compile Include="Refactorings\RemoveRedundantAutoPropertyInitializationRefactoring.cs" />

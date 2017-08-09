@@ -4,6 +4,7 @@ using System;
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Roslynator.CSharp.Refactorings;
 
@@ -28,8 +29,16 @@ namespace Roslynator.CSharp.DiagnosticAnalyzers
             {
                 INamedTypeSymbol taskType = startContext.Compilation.GetTypeByMetadataName(MetadataNames.System_Threading_Tasks_Task);
 
-                startContext.RegisterSyntaxNodeAction(f => ReduceIfNestingRefactoring.AnalyzeIfStatement(f, taskType), SyntaxKind.IfStatement);
+                startContext.RegisterSyntaxNodeAction(f => AnalyzeIfStatement(f, taskType), SyntaxKind.IfStatement);
             });
+        }
+
+        private static void AnalyzeIfStatement(SyntaxNodeAnalysisContext context, INamedTypeSymbol taskType)
+        {
+            var ifStatement = (IfStatementSyntax)context.Node;
+
+            if (ReduceIfNestingRefactoring.IsFixable(ifStatement, context.SemanticModel, taskType, context.CancellationToken, topLevelOnly: true))
+                context.ReportDiagnostic(DiagnosticDescriptors.ReduceIfNesting, ifStatement.IfKeyword);
         }
     }
 }

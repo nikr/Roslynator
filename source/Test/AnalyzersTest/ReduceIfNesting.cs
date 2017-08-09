@@ -1,6 +1,6 @@
 ﻿// Copyright (c) Josef Pihrt. All rights reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-#pragma warning disable CS0168, RCS1002, RCS1049, RCS1118, RCS1176, RCS1187
+#pragma warning disable CS0168, RCS1002, RCS1049, RCS1090, RCS1118, RCS1176, RCS1187
 
 using System.Collections;
 using System.Collections.Generic;
@@ -20,8 +20,12 @@ namespace Roslynator.CSharp.Analyzers.Test
 
                 if (!_condition)
                 {
-                    Foo();
-                    Foo();
+                    Foo2();
+
+                    if (_condition)
+                    {
+                        Foo3();
+                    }
                 }
             }
 
@@ -33,8 +37,12 @@ namespace Roslynator.CSharp.Analyzers.Test
 
                     if (!_condition)
                     {
-                        Foo();
-                        Foo();
+                        Foo2();
+
+                        if (_condition)
+                        {
+                            Foo3();
+                        }
                     }
                 }
             }
@@ -44,12 +52,16 @@ namespace Roslynator.CSharp.Analyzers.Test
         {
             if (_condition)
             {
-                yield return null;
+                yield return "1";
 
                 if (!_condition)
                 {
-                    yield return null;
-                    yield return null;
+                    yield return "2";
+
+                    if (_condition)
+                    {
+                        yield return "3";
+                    }
                 }
             }
 
@@ -57,12 +69,16 @@ namespace Roslynator.CSharp.Analyzers.Test
             {
                 if (_condition)
                 {
-                    yield return null;
+                    yield return "1";
 
                     if (!_condition)
                     {
-                        yield return null;
-                        yield return null;
+                        yield return "2";
+
+                        if (_condition)
+                        {
+                            yield return "3";
+                        }
                     }
                 }
             }
@@ -72,12 +88,16 @@ namespace Roslynator.CSharp.Analyzers.Test
         {
             if (_condition)
             {
-                yield return null;
+                yield return "1";
 
                 if (!_condition)
                 {
-                    yield return null;
-                    yield return null;
+                    yield return "2";
+
+                    if (_condition)
+                    {
+                        yield return "3";
+                    }
                 }
             }
 
@@ -85,12 +105,16 @@ namespace Roslynator.CSharp.Analyzers.Test
             {
                 if (_condition)
                 {
-                    yield return null;
+                    yield return "1";
 
                     if (!_condition)
                     {
-                        yield return null;
-                        yield return null;
+                        yield return "2";
+
+                        if (_condition)
+                        {
+                            yield return "3";
+                        }
                     }
                 }
             }
@@ -100,12 +124,16 @@ namespace Roslynator.CSharp.Analyzers.Test
         {
             if (_condition)
             {
-                await FooAsync().ConfigureAwait(false);
+                await FooAsync();
 
                 if (!_condition)
                 {
-                    Foo();
-                    Foo();
+                    await Foo2Async();
+
+                    if (!_condition)
+                    {
+                        await Foo3Async();
+                    }
                 }
             }
 
@@ -113,15 +141,37 @@ namespace Roslynator.CSharp.Analyzers.Test
             {
                 if (_condition)
                 {
-                    await FooAsync().ConfigureAwait(false);
+                    await FooAsync();
 
                     if (!_condition)
                     {
-                        Foo();
-                        Foo();
+                        await Foo2Async();
+
+                        if (!_condition)
+                        {
+                            await Foo3Async();
+                        }
                     }
                 }
             }
+        }
+
+        private static void Foo2()
+        {
+        }
+
+        private static void Foo3()
+        {
+        }
+
+        private static async Task Foo2Async()
+        {
+            await Foo2Async();
+        }
+
+        private static async Task Foo3Async()
+        {
+            await Foo3Async();
         }
     }
 }

@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Diagnostics;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 using static Roslynator.CSharp.CSharpFactory;
 
@@ -14,32 +13,19 @@ namespace Roslynator.CSharp.Refactorings
 {
     internal static class ReduceIfNestingRefactoring
     {
-        public static void AnalyzeIfStatement(SyntaxNodeAnalysisContext context, INamedTypeSymbol taskType)
-        {
-            var ifStatement = (IfStatementSyntax)context.Node;
-
-            if (IsFixable(ifStatement, taskType, context.SemanticModel, context.CancellationToken))
-                context.ReportDiagnostic(DiagnosticDescriptors.ReduceIfNesting, ifStatement.IfKeyword);
-        }
-
-        private static bool IsFixable(
+        public static bool IsFixable(
             IfStatementSyntax ifStatement,
+            SemanticModel semanticModel,
             INamedTypeSymbol taskType = null,
-            SemanticModel semanticModel = null,
-            CancellationToken cancellationToken = default(CancellationToken))
+            CancellationToken cancellationToken = default(CancellationToken),
+            bool topLevelOnly = false)
         {
-            if (ifStatement.IsSimpleIf()
-                && ifStatement.Condition?.IsMissing == false
-                && ifStatement.Statement?.IsKind(SyntaxKind.Block) == true
-                && ifStatement.IsParentKind(SyntaxKind.Block))
+            if (IsFixable(ifStatement))
             {
                 var block = (BlockSyntax)ifStatement.Parent;
 
                 if (block.Statements.IsLastStatement(ifStatement, skipLocalFunction: true))
                 {
-                    if (semanticModel == null)
-                        return true;
-
                     SyntaxNode parent = block.Parent;
 
                     switch (parent.Kind())
@@ -92,11 +78,26 @@ namespace Roslynator.CSharp.Refactorings
                                         && localFunction.ContainsYield();
                                 }
                             }
+                        case SyntaxKind.IfStatement:
+                            {
+                                if (!topLevelOnly)
+                                    return  IsFixable((IfStatementSyntax)parent, semanticModel, taskType, cancellationToken, topLevelOnly);
+
+                                break;
+                            }
                     }
                 }
             }
 
             return false;
+        }
+
+        private static bool IsFixable(IfStatementSyntax ifStatement)
+        {
+            return ifStatement.IsSimpleIf()
+                && ifStatement.Condition?.IsMissing == false
+                && ifStatement.Statement?.IsKind(SyntaxKind.Block) == true
+                && ifStatement.IsParentKind(SyntaxKind.Block);
         }
 
         public static Task<Document> RefactorAsync(
@@ -106,7 +107,12 @@ namespace Roslynator.CSharp.Refactorings
         {
             var block = (BlockSyntax)ifStatement.Parent;
 
-            bool containsYield = block
+            SyntaxNode node = block;
+
+            while (!node.IsParentKind(SyntaxKind.MethodDeclaration, SyntaxKind.LocalFunctionStatement))
+                node = node.Parent;
+
+            bool containsYield = node
                 .DescendantNodes(f => !f.IsNestedMethod())
                 .Any(f => f.IsKind(SyntaxKind.YieldBreakStatement, SyntaxKind.YieldReturnStatement));
 
@@ -114,7 +120,7 @@ namespace Roslynator.CSharp.Refactorings
                 ? (StatementSyntax)YieldBreakStatement()
                 : ReturnStatement();
 
-            var rewriter = new IfStatementRewriter(jumpStatement, visitLocalFunction: block.Parent.IsKind(SyntaxKind.LocalFunctionStatement));
+            var rewriter = new IfStatementRewriter(jumpStatement, visitLocalFunction: node.IsParentKind(SyntaxKind.LocalFunctionStatement));
 
             SyntaxNode newNode = rewriter.VisitBlock(block);
 
@@ -141,7 +147,8 @@ namespace Roslynator.CSharp.Refactorings
                 var ifStatement = statements.LastOrDefault(f => !f.IsKind(SyntaxKind.LocalFunctionStatement)) as IfStatementSyntax;
 
                 if (ifStatement != null
-                    && IsFixable(ifStatement))
+                    && IsFixable(ifStatement)
+                    && ((BlockSyntax)ifStatement.Parent).Statements.IsLastStatement(ifStatement, skipLocalFunction: true))
                 {
                     var block = (BlockSyntax)ifStatement.Statement;
 
